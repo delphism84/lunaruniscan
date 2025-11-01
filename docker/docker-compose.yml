@@ -27,4 +27,4 @@ services:
       - "127.0.0.1:45444:45444"
     volumes:
       - /var/uniscanner/docker/be/public:/app/public
-      - /var/lunarsystem/client_secret_2_257421771333-c03gmigm406vge3054qar0grokp7f78a.apps.googleusercontent.com.json:/var/lunarsystem/client_secret_2_257421771333-c03gmigm406vge3054qar0grokp7f78a.apps.googleusercontent.com.json:ro
+      - /var/uniscanner/secrets/google_client_secret.json:/app/secrets/google_client_secret.json:ro
