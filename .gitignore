@@ -1,2 +1,7 @@
 # MongoDB data (do not version)
 docker/data/
+
+# local environment (do not commit)
+.env
+.env.local
+!.env.example

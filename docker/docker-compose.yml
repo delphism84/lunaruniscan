@@ -7,9 +7,8 @@ services:
     restart: always
     ports:
       - "47017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ladmin
-      MONGO_INITDB_ROOT_PASSWORD: "Eldpdj!@34"
+    env_file:
+      - .env
     command: ["mongod", "--port", "27017", "--bind_ip", "0.0.0.0"]
     volumes:
       - /var/uniscanner/docker/data/mongo:/data/db
@@ -22,23 +21,8 @@ services:
     restart: always
     depends_on:
       - mongo
-    environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:45444
-      - MONGO_URI=mongodb://ladmin:Eldpdj%21%4034@mongo:27017/?authSource=admin&authMechanism=SCRAM-SHA-256
-      - MONGO_DB=uniscanner
-      - API_KEY_DEFAULT=lunar-earth-sun
-      - API_KEY_MASTER_B64=bHVuYXItZWFydGgtc3Vu
-      - TOKEN_TTL_MINUTES=120
-      - SMTP_HOST=smtp.worksmobile.com
-      - SMTP_PORT=465
-      - SMTP_USER=lunar@lunarsystem.co.kr
-      - SMTP_PASS=Nz3Qqkbsy0w2
-      - SMTP_FROM=lunar@lunarsystem.co.kr
-      - GOOGLE_CLIENT_IDS=257421771333-c03gmigm406vge3054qar0grokp7f78a.apps.googleusercontent.com
-      - GOOGLE_CLIENT_ID=257421771333-c03gmigm406vge3054qar0grokp7f78a.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_REDIRECT_URI=https://lunarsystem.co.kr/auth/google/callback
-      - GOOGLE_CREDENTIALS_JSON_PATH=/var/lunarsystem/client_secret_2_257421771333-c03gmigm406vge3054qar0grokp7f78a.apps.googleusercontent.com.json
+    env_file:
+      - .env
     ports:
       - "127.0.0.1:45444:45444"
     volumes:
