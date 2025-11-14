@@ -1,0 +1,59 @@
+# Root
+.DS_Store
+.idea/
+.vscode/
+.fleet/
+.cache/
+*.log
+logs/
+tmp/
+dist/
+build/
+coverage/
+.env
+.env.local
+.env.*.local
+.envrc
+data/
+
+# Node / Next.js (fe-admin)
+fe-admin/node_modules/
+fe-admin/.next/
+fe-admin/out/
+fe-admin/.turbo/
+fe-admin/.vercel/
+fe-admin/npm-debug.log*
+fe-admin/yarn-error.log*
+fe-admin/pnpm-debug.log*
+fe-admin/.env
+fe-admin/.env.local
+fe-admin/.env.*.local
+
+# Flutter (lnuniscannerfeapp)
+lnuniscannerfeapp/.dart_tool/
+lnuniscannerfeapp/.packages
+lnuniscannerfeapp/build/
+lnuniscannerfeapp/.flutter-plugins
+lnuniscannerfeapp/.flutter-plugins-dependencies
+lnuniscannerfeapp/.metadata
+lnuniscannerfeapp/ios/Pods/
+lnuniscannerfeapp/ios/.symlinks/
+lnuniscannerfeapp/macos/Flutter/ephemeral/
+lnuniscannerfeapp/linux/flutter/ephemeral/
+lnuniscannerfeapp/windows/flutter/ephemeral/
+
+# .NET (lnuniserverbe)
+lnuniserverbe/LnUniScannerBE/bin/
+lnuniserverbe/LnUniScannerBE/obj/
+lnuniserverbe/LnUniScannerBE/*.user
+lnuniserverbe/LnUniScannerBE/*.suo
+lnuniserverbe/LnUniScannerBE/appsettings*.json
+
+# Docker / Certs
+lnuniserverbe/certbot/
+lnuniserverbe/nginx-config/certs/
+
+# OS
+Thumbs.db
+
+

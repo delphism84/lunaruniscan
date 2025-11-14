@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Nginx 리버스 프록시
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-config:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - uniscan-admin
+      - dotnet-api
+    restart: unless-stopped
+
+  # NextJS admin FE (DB 데이터 관리용)
+  uniscan-admin:
+    build:
+      context: ../fe-admin
+      dockerfile: Dockerfile
+    ports:
+      - "50200:50200"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.domain1.com
+    restart: unless-stopped
+
+  # .NET API 백엔드
+  dotnet-api:
+    build:
+      context: ./LnUniScannerBE
+      dockerfile: Dockerfile
+    ports:
+      - "50100:50100"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:50100
+    restart: unless-stopped
+
+  # 데이터베이스 (MongoDB)
+  uniscan-mongo:
+    image: mongo:6
+    ports:
+      - "50300:27017"
+    restart: unless-stopped
+
+  # SSL 인증서 자동 갱신
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
