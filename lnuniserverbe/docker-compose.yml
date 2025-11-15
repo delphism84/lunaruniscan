@@ -13,7 +13,7 @@ services:
       - ./certbot/www:/var/www/certbot
     depends_on:
       - uniscan-admin
-      - dotnet-api
+      - node-api
     restart: unless-stopped
 
   # NextJS admin FE (DB 데이터 관리용)
@@ -28,16 +28,18 @@ services:
       - NEXT_PUBLIC_API_URL=https://api.domain1.com
     restart: unless-stopped
 
-  # .NET API 백엔드
-  dotnet-api:
+  # Node API 백엔드
+  node-api:
     build:
-      context: ./LnUniScannerBE
+      context: ./node-api
       dockerfile: Dockerfile
     ports:
       - "50100:50100"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:50100
+      - NODE_ENV=production
+      - PORT=50100
+    volumes:
+      - ./data/api-files:/usr/src/app/files
     restart: unless-stopped
 
   # 데이터베이스 (MongoDB)

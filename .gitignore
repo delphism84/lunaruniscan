@@ -52,6 +52,7 @@ lnuniserverbe/LnUniScannerBE/appsettings*.json
 # Docker / Certs
 lnuniserverbe/certbot/
 lnuniserverbe/nginx-config/certs/
+lnuniserverbe/data/
 
 # OS
 Thumbs.db

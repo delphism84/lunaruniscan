@@ -20,7 +20,8 @@ This repository manages three projects in a single monorepo:
 - Flutter app: see `lnuniscannerfeapp/README.md` and `pubspec.yaml`
 - Admin web: `fe-admin` with Node 20+ (see `package.json`)
 - Backend:
-  - App: `lnuniserverbe/LnUniScannerBE`
+  - Node API: `lnuniserverbe/node-api` (Express + socket.io, port 50100)
+  - Legacy .NET: `lnuniserverbe/LnUniScannerBE` (deprecated)
   - Reverse proxy + SSL: `lnuniserverbe/nginx-config`, `certbot`
   - Compose: `lnuniserverbe/docker-compose.yml`
 
@@ -28,9 +29,11 @@ This repository manages three projects in a single monorepo:
 
 - Secrets and environment files are ignored via `.gitignore` (e.g., `.env`, `appsettings*.json`).
 - For production SSL, map your domains and use Certbot as wired in compose/nginx.
+- Uploaded files (images) are stored under `lnuniserverbe/data/api-files` (mounted to container `/usr/src/app/files`).
 
 ### Repo
 
 GitHub: `https://github.com/delphism84/lunaruniscan`
+
 
 
