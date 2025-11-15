@@ -57,3 +57,7 @@ lnuniserverbe/nginx-config/certs/
 Thumbs.db
 
 
+# Remote repo rules
+docker/data/
+!.env.example
+

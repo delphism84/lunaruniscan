@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: lunar-mongo
+    restart: always
+    ports:
+      - "47017:27017"
+    env_file:
+      - .env
+    command: ["mongod", "--port", "27017", "--bind_ip", "0.0.0.0"]
+    volumes:
+      - /var/uniscanner/docker/data/mongo:/data/db
+      - /var/uniscanner/docker/mongo-init:/docker-entrypoint-initdb.d:ro
+  be:
+    build:
+      context: /var/uniscanner/docker/be
+      dockerfile: Dockerfile
+    container_name: lunar-be
+    restart: always
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:45444:45444"
+    volumes:
+      - /var/uniscanner/docker/be/public:/app/public
+      - /var/uniscanner/secrets/google_client_secret.json:/app/secrets/google_client_secret.json:ro
