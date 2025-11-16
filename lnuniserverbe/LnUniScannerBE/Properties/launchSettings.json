@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "LnUniScannerBE": {
+    "LnUniScanBE": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

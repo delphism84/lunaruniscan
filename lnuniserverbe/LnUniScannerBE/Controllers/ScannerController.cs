@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using LnUniScannerBE.Hubs;
+using LnUniScanBE.Hubs;
 using System.IO;
 
-namespace LnUniScannerBE.Controllers
+namespace LnUniScanBE.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -200,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'LN UniScanner',
+                      'LN UniScan',
                       style: TextStyle(
                         fontSize: 12,
                         color: CupertinoColors.systemGrey2,

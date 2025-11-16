@@ -29,25 +29,25 @@ fe-admin/.env
 fe-admin/.env.local
 fe-admin/.env.*.local
 
-# Flutter (lnuniscannerfeapp)
-lnuniscannerfeapp/.dart_tool/
-lnuniscannerfeapp/.packages
-lnuniscannerfeapp/build/
-lnuniscannerfeapp/.flutter-plugins
-lnuniscannerfeapp/.flutter-plugins-dependencies
-lnuniscannerfeapp/.metadata
-lnuniscannerfeapp/ios/Pods/
-lnuniscannerfeapp/ios/.symlinks/
-lnuniscannerfeapp/macos/Flutter/ephemeral/
-lnuniscannerfeapp/linux/flutter/ephemeral/
-lnuniscannerfeapp/windows/flutter/ephemeral/
+# Flutter (lnUniScanfeapp)
+lnUniScanfeapp/.dart_tool/
+lnUniScanfeapp/.packages
+lnUniScanfeapp/build/
+lnUniScanfeapp/.flutter-plugins
+lnUniScanfeapp/.flutter-plugins-dependencies
+lnUniScanfeapp/.metadata
+lnUniScanfeapp/ios/Pods/
+lnUniScanfeapp/ios/.symlinks/
+lnUniScanfeapp/macos/Flutter/ephemeral/
+lnUniScanfeapp/linux/flutter/ephemeral/
+lnUniScanfeapp/windows/flutter/ephemeral/
 
 # .NET (lnuniserverbe)
-lnuniserverbe/LnUniScannerBE/bin/
-lnuniserverbe/LnUniScannerBE/obj/
-lnuniserverbe/LnUniScannerBE/*.user
-lnuniserverbe/LnUniScannerBE/*.suo
-lnuniserverbe/LnUniScannerBE/appsettings*.json
+lnuniserverbe/LnUniScanBE/bin/
+lnuniserverbe/LnUniScanBE/obj/
+lnuniserverbe/LnUniScanBE/*.user
+lnuniserverbe/LnUniScanBE/*.suo
+lnuniserverbe/LnUniScanBE/appsettings*.json
 
 # Docker / Certs
 lnuniserverbe/certbot/

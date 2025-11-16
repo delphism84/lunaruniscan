@@ -3,8 +3,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>LnUniScannerBE</RootNamespace>
-    <AssemblyName>LnUniScannerBE</AssemblyName>
+    <RootNamespace>LnUniScanBE</RootNamespace>
+    <AssemblyName>LnUniScanBE</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

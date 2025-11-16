@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using System;
 
-namespace LnUniScannerBE.Hubs
+namespace LnUniScanBE.Hubs
 {
     public class ScannerHub : Hub
     {

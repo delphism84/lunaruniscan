@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace LnUniScannerBE.Controllers
+namespace LnUniScanBE.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

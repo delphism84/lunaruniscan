@@ -1,4 +1,4 @@
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -18,7 +18,7 @@ using MimeKit;
 var builder = WebApplication.CreateBuilder(args);
 
 string mongoUri = Environment.GetEnvironmentVariable("MONGO_URI") ?? "mongodb://localhost:27017";
-string mongoDbName = Environment.GetEnvironmentVariable("MONGO_DB") ?? "uniscanner";
+string mongoDbName = Environment.GetEnvironmentVariable("MONGO_DB") ?? "uniscan";
 string apiKeyDefault = Environment.GetEnvironmentVariable("API_KEY_DEFAULT") ?? "lunar-earth-sun";
 string? masterKeyB64 = Environment.GetEnvironmentVariable("API_KEY_MASTER_B64");
 int tokenTtlMinutes = int.TryParse(Environment.GetEnvironmentVariable("TOKEN_TTL_MINUTES"), out var ttl) ? ttl : 120;

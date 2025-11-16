@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WebSocketProvider()),
       ],
       child: CupertinoApp(
-        title: 'LN UniScanner',
+        title: 'LN UniScan',
         theme: const CupertinoThemeData(
           primaryColor: CupertinoColors.systemBlue,
           brightness: Brightness.light,

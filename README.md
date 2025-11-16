@@ -1,15 +1,15 @@
-## lunaruniscan monorepo
+﻿## lunaruniscan monorepo
 
 This repository manages three projects in a single monorepo:
 
-- fe app: `lnuniscannerfeapp` (Flutter)
+- fe app: `lnuniscanfeapp` (Flutter)
 - fe admin: `fe-admin` (Next.js)
 - be: `lnuniserverbe` (.NET + Nginx + Docker)
 
 ### Structure
 
 ```
-/lnuniscannerfeapp   # Flutter mobile/desktop/web app
+/lnuniscanfeapp   # Flutter mobile/desktop/web app
 /fe-admin            # Next.js admin web
 /lnuniserverbe       # .NET backend, docker-compose, nginx config
 /doc                 # documents
@@ -17,11 +17,11 @@ This repository manages three projects in a single monorepo:
 
 ### Development
 
-- Flutter app: see `lnuniscannerfeapp/README.md` and `pubspec.yaml`
+- Flutter app: see `lnuniscanfeapp/README.md` and `pubspec.yaml`
 - Admin web: `fe-admin` with Node 20+ (see `package.json`)
 - Backend:
   - Node API: `lnuniserverbe/node-api` (Express + socket.io, port 50100)
-  - Legacy .NET: `lnuniserverbe/LnUniScannerBE` (deprecated)
+  - Legacy .NET: `lnuniserverbe/LnUniScanBE` (deprecated)
   - Reverse proxy + SSL: `lnuniserverbe/nginx-config`, `certbot`
   - Compose: `lnuniserverbe/docker-compose.yml`
 

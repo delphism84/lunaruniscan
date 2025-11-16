@@ -1,4 +1,4 @@
-using LnUniScannerBE.Hubs;
+using LnUniScanBE.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
