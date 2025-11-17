@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/enhanced_scan_service.dart';
+import '../providers/app_state.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
       child: SafeArea(
@@ -28,6 +31,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // app settings section
             _buildSectionHeader('App Settings'),
+            _buildSettingItem(
+              icon: CupertinoIcons.link,
+              title: 'API Base URL',
+              subtitle: app.apiBaseUrl,
+              onTap: () => _showApiDialog(app),
+            ),
             _buildSettingItem(
               icon: CupertinoIcons.bell,
               title: 'Notifications',
@@ -101,6 +110,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showApiDialog(AppState app) {
+    final controller = TextEditingController(text: app.apiBaseUrl);
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('API Base URL'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            CupertinoTextField(controller: controller, placeholder: 'https://server.uniscan.kr'),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            child: const Text('Save'),
+            onPressed: () async {
+              await app.setApiBaseUrl(controller.text.trim());
+              if (mounted) Navigator.of(context).pop();
+            },
+          ),
+        ],
       ),
     );
   }

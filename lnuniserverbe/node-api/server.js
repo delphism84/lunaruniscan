@@ -46,8 +46,42 @@ app.use('/files', express.static(filesRoot));
 // in-memory agents store
 const agentList = [];
 
+// simple persistent store for app init and device ownership
+const dataRoot = path.join(filesRoot, 'data');
+const devicesFile = path.join(dataRoot, 'devices.json'); // [{ eqid, alias, createdAt }]
+const ownershipFile = path.join(dataRoot, 'ownership.json'); // { agentId: eqid }
+function ensureDataDir() {
+  if (!fs.existsSync(dataRoot)) fs.mkdirSync(dataRoot, { recursive: true });
+  if (!fs.existsSync(devicesFile)) fs.writeFileSync(devicesFile, '[]');
+  if (!fs.existsSync(ownershipFile)) fs.writeFileSync(ownershipFile, '{}');
+}
+function readJsonSafe(file, fallback) {
+  try {
+    const raw = fs.readFileSync(file, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+function writeJsonSafe(file, obj) {
+  fs.writeFileSync(file, JSON.stringify(obj, null, 2), 'utf8');
+}
+function generateEqid() {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const digits = '0123456789';
+  const l = () => letters[Math.floor(Math.random() * letters.length)];
+  const d = () => digits[Math.floor(Math.random() * digits.length)];
+  return `${l()}${l()}${l()}${d()}${d()}${d()}`;
+}
+
 // REST endpoints
 app.get('/api/agents', (req, res) => {
+  const owner = String(req.query.owner || '').trim();
+  if (owner.length > 0) {
+    const owners = readJsonSafe(ownershipFile, {});
+    const list = agentList.filter(a => owners[a.agentId] === owner);
+    return res.json(list);
+  }
   return res.json(agentList);
 });
 
@@ -72,8 +106,35 @@ app.patch('/api/agents/:id', (req, res) => {
   }
   if (typeof ownerUserId === 'string' && ownerUserId.length > 0) {
     agent.ownerUserId = ownerUserId;
+    ensureDataDir();
+    const owners = readJsonSafe(ownershipFile, {});
+    owners[id] = ownerUserId;
+    writeJsonSafe(ownershipFile, owners);
   }
   return res.json(agent);
+});
+
+// unbind owner (clear ownership) if eqid matches (optional guard)
+app.delete('/api/agents/:id/owner', (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'id required' });
+    ensureDataDir();
+    const owners = readJsonSafe(ownershipFile, {});
+    const targetEqid = String(req.query.eqid || '').trim();
+    if (owners[id]) {
+      if (targetEqid && owners[id] !== targetEqid) {
+        return res.status(403).json({ error: 'eqid mismatch' });
+      }
+      delete owners[id];
+      writeJsonSafe(ownershipFile, owners);
+    }
+    const agent = agentList.find(a => a.agentId === id);
+    if (agent) agent.ownerUserId = undefined;
+    return res.json({ id, unbound: true });
+  } catch {
+    return res.status(500).json({ error: 'failed to unbind' });
+  }
 });
 
 app.get('/api/scanner', (req, res) => {
@@ -82,7 +143,7 @@ app.get('/api/scanner', (req, res) => {
 
 app.post('/api/scanner/scan', (req, res) => {
   try {
-    const { data } = req.body || {};
+    const { data, eqid, deviceIds } = req.body || {};
     if (typeof data !== 'string' || data.length === 0) {
       return res.status(400).json({ error: 'data required' });
     }
@@ -90,12 +151,83 @@ app.post('/api/scanner/scan', (req, res) => {
       id: uuidv4(),
       data,
       timestamp: new Date().toISOString(),
-      status: 'Success'
+      status: 'Success',
+      eqid: eqid || null,
+      targets: Array.isArray(deviceIds) ? deviceIds : undefined
     };
     io.emit('ScanResult', result);
     return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// app init: issue EQID and persist
+app.post('/api/app/init', (req, res) => {
+  try {
+    ensureDataDir();
+    const devices = readJsonSafe(devicesFile, []);
+    // try to reuse if provided eqid exists
+    const provided = String(req.body?.eqid || '').trim();
+    if (provided.length === 6 && /^[A-Z]{3}\d{3}$/.test(provided)) {
+      const found = devices.find(d => d.eqid === provided);
+      if (found) return res.json(found);
+    }
+    // generate new unique eqid
+    let eqid;
+    do {
+      eqid = generateEqid();
+    } while (devices.some(d => d.eqid === eqid));
+    const alias = 'SCANNER';
+    const record = { eqid, alias, createdAt: new Date().toISOString() };
+    devices.push(record);
+    writeJsonSafe(devicesFile, devices);
+    return res.json(record);
+  } catch (e) {
+    return res.status(500).json({ error: 'init failed' });
+  }
+});
+
+// update alias
+app.patch('/api/app/alias', (req, res) => {
+  try {
+    ensureDataDir();
+    const { eqid, alias } = req.body || {};
+    if (typeof eqid !== 'string' || !/^[A-Z]{3}\d{3}$/.test(eqid)) {
+      return res.status(400).json({ error: 'invalid eqid' });
+    }
+    const devices = readJsonSafe(devicesFile, []);
+    const idx = devices.findIndex(d => d.eqid === eqid);
+    if (idx === -1) return res.status(404).json({ error: 'not found' });
+    const nextAlias = String(alias || '').trim() || 'SCANNER';
+    devices[idx].alias = nextAlias;
+    writeJsonSafe(devicesFile, devices);
+    return res.json(devices[idx]);
+  } catch {
+    return res.status(500).json({ error: 'alias update failed' });
+  }
+});
+
+// list agents bound to eqid
+app.get('/api/app/devices', (req, res) => {
+  try {
+    ensureDataDir();
+    const eqid = String(req.query.eqid || '').trim();
+    if (!/^[A-Z]{3}\d{3}$/.test(eqid)) {
+      return res.status(400).json({ error: 'invalid eqid' });
+    }
+    const owners = readJsonSafe(ownershipFile, {});
+    const bound = agentList.filter(a => owners[a.agentId] === eqid);
+    // shape rows
+    const rows = bound.map(a => ({
+      id: a.agentId,
+      name: a.name,
+      status: a.status,
+      type: 'PC'
+    }));
+    return res.json(rows);
+  } catch {
+    return res.status(500).json({ error: 'failed to list devices' });
   }
 });
 

@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../providers/app_state.dart';
 import 'scan_screen.dart';
 import 'result_screen.dart';
 import 'management_screen.dart';
@@ -23,13 +26,6 @@ class _MainScreenState extends State<MainScreen> {
     const SettingsScreen(),
   ];
 
-  final List<String> _titles = [
-    'Scan',
-    'Results',
-    'Management',
-    'Settings',
-  ];
-
   void _toggleDrawer() {
     setState(() {
       _showDrawer = !_showDrawer;
@@ -38,52 +34,102 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    final size = MediaQuery.of(context).size;
+    final headerHeight = size.height * 0.2;
+    final eqid = app.eqid ?? '------';
+    final alias = app.alias;
+
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: CupertinoColors.systemBackground.withOpacity(0.9),
-        border: const Border(
-          bottom: BorderSide(
-            color: CupertinoColors.systemGrey5,
-            width: 0.5,
-          ),
-        ),
-        leading: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: _toggleDrawer,
-          child: const Icon(
-            CupertinoIcons.line_horizontal_3,
-            size: 24,
-          ),
-        ),
-        middle: Text(
-          _titles[_currentIndex],
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () {
-            // notification or profile action
-          },
-          child: const Icon(
-            CupertinoIcons.bell,
-            size: 24,
-          ),
-        ),
-      ),
       child: Stack(
         children: [
-          // main content
           Column(
             children: [
-              // main content
+              // top header 20%
+              Container(
+                height: headerHeight,
+                width: double.infinity,
+                color: CupertinoColors.systemBlue,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'EQID',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: CupertinoColors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                eqid,
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  color: CupertinoColors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: () => _showEditAliasDialog(app, alias),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(CupertinoIcons.pencil, color: CupertinoColors.white, size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        alias,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: CupertinoColors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // QR on right
+                        Container(
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: QrImageView(
+                            data: eqid,
+                            size: headerHeight * 0.6,
+                            backgroundColor: CupertinoColors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // content area
               Expanded(
                 child: _screens[_currentIndex],
               ),
-              
-              // bottom tab bar
+
+              // bottom tabs (Korean labels)
               Container(
                 decoration: const BoxDecoration(
                   border: Border(
@@ -101,34 +147,64 @@ class _MainScreenState extends State<MainScreen> {
                     });
                   },
                   backgroundColor: CupertinoColors.systemBackground.withOpacity(0.9),
-                  activeColor: CupertinoColors.systemBlue,
+                  activeColor: CupertinoColors.white,
                   inactiveColor: CupertinoColors.systemGrey,
                   iconSize: 24,
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.qrcode_viewfinder),
-                      label: 'Scan',
+                      label: '인식',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.list_bullet),
-                      label: 'Results',
+                      label: '결과',
                     ),
                     BottomNavigationBarItem(
-                      icon: Icon(CupertinoIcons.folder),
-                      label: 'Management',
+                      icon: Icon(CupertinoIcons.device_desktop),
+                      label: '연동',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.settings),
-                      label: 'Settings',
+                      label: '설정',
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          
-          // drawer overlay
+
           if (_showDrawer) _buildDrawerOverlay(),
+        ],
+      ),
+    );
+  }
+
+  void _showEditAliasDialog(AppState app, String current) {
+    final controller = TextEditingController(text: current);
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('별칭 편집'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            CupertinoTextField(controller: controller, placeholder: 'SCANNER'),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('취소'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            child: const Text('저장'),
+            onPressed: () async {
+              final v = controller.text.trim();
+              await app.updateAlias(v);
+              if (mounted) Navigator.of(context).pop();
+            },
+          ),
         ],
       ),
     );

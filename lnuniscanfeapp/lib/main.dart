@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/websocket_provider.dart';
+import 'providers/app_state.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => WebSocketProvider()),
+        ChangeNotifierProvider(create: (_) => AppState()),
       ],
       child: CupertinoApp(
         title: 'LN UniScan',
