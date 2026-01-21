@@ -52,8 +52,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             _buildSettingItem(
               icon: CupertinoIcons.cloud,
-              title: 'Sync Settings',
-              onTap: () {},
+              title: 'Manual Sync',
+              onTap: () async {
+                await app.manualSync();
+                if (!mounted) return;
+                showCupertinoDialog(
+                  context: context,
+                  builder: (context) => CupertinoAlertDialog(
+                    title: const Text('Sync Started'),
+                    content: const Text('Pending uploads will be retried in background.'),
+                    actions: [
+                      CupertinoDialogAction(
+                        child: const Text('OK'),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             
             const SizedBox(height: 20),
@@ -124,7 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 12),
-            CupertinoTextField(controller: controller, placeholder: 'https://server.uniscan.kr'),
+            CupertinoTextField(controller: controller, placeholder: 'http://175.100.115.114:50100'),
           ],
         ),
         actions: [

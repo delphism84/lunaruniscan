@@ -7,7 +7,7 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  String _baseUrl = 'https://server.uniscan.kr';
+  String _baseUrl = 'http://175.100.115.114:50100';
 
   String get baseUrl => _baseUrl;
   Future<void> setBaseUrl(String url) async {
@@ -27,43 +27,68 @@ class ApiService {
       Uri.parse('$_baseUrl$path').replace(queryParameters: q);
 
   Future<Map<String, dynamic>?> initApp({String? eqid}) async {
-    final resp = await http.post(
-      _u('/api/app/init'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'eqid': eqid}),
-    );
-    if (resp.statusCode == 200) {
-      return jsonDecode(resp.body) as Map<String, dynamic>;
+    try {
+      final resp = await http.post(
+        _u('/api/app/init'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'eqid': eqid}),
+      ).timeout(const Duration(seconds: 6));
+      if (resp.statusCode == 200) {
+        return jsonDecode(resp.body) as Map<String, dynamic>;
+      } else {
+        print('initApp failed: ${resp.statusCode} ${resp.body}');
+      }
+    } catch (e) {
+      print('initApp error: $e');
     }
     return null;
   }
 
   Future<Map<String, dynamic>?> updateAlias(String eqid, String alias) async {
-    final resp = await http.patch(
-      _u('/api/app/alias'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'eqid': eqid, 'alias': alias}),
-    );
-    if (resp.statusCode == 200) {
-      return jsonDecode(resp.body) as Map<String, dynamic>;
+    try {
+      final resp = await http.patch(
+        _u('/api/app/alias'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'eqid': eqid, 'alias': alias}),
+      ).timeout(const Duration(seconds: 6));
+      if (resp.statusCode == 200) {
+        return jsonDecode(resp.body) as Map<String, dynamic>;
+      } else {
+        print('updateAlias failed: ${resp.statusCode} ${resp.body}');
+      }
+    } catch (e) {
+      print('updateAlias error: $e');
     }
     return null;
   }
 
   Future<List<Map<String, dynamic>>> listDevices(String eqid) async {
-    final resp = await http.get(_u('/api/app/devices', {'eqid': eqid}));
-    if (resp.statusCode == 200) {
-      final data = jsonDecode(resp.body);
-      if (data is List) {
-        return data.cast<Map<String, dynamic>>();
+    try {
+      final resp = await http.get(_u('/api/app/devices', {'eqid': eqid})).timeout(const Duration(seconds: 6));
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body);
+        if (data is List) {
+          return data.cast<Map<String, dynamic>>();
+        }
+      } else {
+        print('listDevices failed: ${resp.statusCode} ${resp.body}');
       }
+    } catch (e) {
+      print('listDevices error: $e');
     }
     return [];
   }
 
   Future<bool> unbindDevice(String deviceId, String eqid) async {
-    final resp = await http.delete(_u('/api/agents/$deviceId/owner', {'eqid': eqid}));
-    return resp.statusCode == 200;
+    try {
+      final resp = await http.delete(_u('/api/agents/$deviceId/owner', {'eqid': eqid})).timeout(const Duration(seconds: 6));
+      final ok = resp.statusCode == 200;
+      if (!ok) print('unbindDevice failed: ${resp.statusCode} ${resp.body}');
+      return ok;
+    } catch (e) {
+      print('unbindDevice error: $e');
+      return false;
+    }
   }
 
   Future<bool> sendScan({
@@ -71,16 +96,23 @@ class ApiService {
     required String eqid,
     List<String>? deviceIds,
   }) async {
-    final resp = await http.post(
-      _u('/api/scanner/scan'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'data': data,
-        'eqid': eqid,
-        if (deviceIds != null && deviceIds.isNotEmpty) 'deviceIds': deviceIds,
-      }),
-    );
-    return resp.statusCode == 200;
+    try {
+      final resp = await http.post(
+        _u('/api/scanner/scan'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'data': data,
+          'eqid': eqid,
+          if (deviceIds != null && deviceIds.isNotEmpty) 'deviceIds': deviceIds,
+        }),
+      ).timeout(const Duration(seconds: 6));
+      final ok = resp.statusCode == 200;
+      if (!ok) print('sendScan failed: ${resp.statusCode} ${resp.body}');
+      return ok;
+    } catch (e) {
+      print('sendScan error: $e');
+      return false;
+    }
   }
 }
 

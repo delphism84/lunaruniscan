@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppState()),
       ],
       child: CupertinoApp(
-        title: 'LN UniScan',
+        title: 'UNISCAN',
         theme: const CupertinoThemeData(
           primaryColor: CupertinoColors.systemBlue,
           brightness: Brightness.light,

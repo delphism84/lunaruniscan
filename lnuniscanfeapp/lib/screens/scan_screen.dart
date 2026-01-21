@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Rect;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -15,12 +16,26 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> {
   final ScanService _scanService = ScanService();
   StreamSubscription<String>? _barcodeSubscription;
+  late final MobileScannerController _controller;
+  bool _detectBusy = false;
+  final Rect _scanWindow = const Rect.fromLTWH(0.1, 0.25, 0.8, 0.5); // 중앙 80%x50%
 
   @override
   void initState() {
     super.initState();
     _initializeStreams();
     _scanService.setMode(ScanMode.barcode);
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates, // 중복 억제
+      detectionTimeoutMs: 1200, // 감지 간격 증가
+      returnImage: false, // 이미지 미반환으로 메모리 압박 완화
+      formats: const [
+        BarcodeFormat.ean13,
+        BarcodeFormat.ean8,
+        BarcodeFormat.upcA,
+        BarcodeFormat.upcE,
+      ],
+    );
   }
 
   void _initializeStreams() {
@@ -37,6 +52,7 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   void dispose() {
     _barcodeSubscription?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -50,6 +66,25 @@ class _ScanScreenState extends State<ScanScreen> {
     _scanService.processManualBarcode();
   }
 
+  void _onDetectThrottled(BarcodeCapture capture) {
+    // 감지 콜백 스로틀링 (중복/빈번한 호출로 UI 프레임 차단 방지)
+    if (_detectBusy) return;
+    _detectBusy = true;
+    _controller.stop(); // 프레임 공급 일시 중지하여 버퍼 대기 방지
+    try {
+      _scanService.onBarcodeDetected(capture);
+    } finally {
+      // 짧은 지연 후 재시작
+      Future.delayed(const Duration(milliseconds: 250), () async {
+        if (!mounted) return;
+        try {
+          await _controller.start();
+        } catch (_) {}
+        _detectBusy = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -59,7 +94,10 @@ class _ScanScreenState extends State<ScanScreen> {
           // 카메라 영역 (단일 MobileScanner)
           Expanded(
             child: MobileScanner(
-              onDetect: _scanService.onBarcodeDetected,
+              controller: _controller,
+              onDetect: _onDetectThrottled,
+              fit: BoxFit.contain,
+              scanWindow: _scanWindow,
             ),
           ),
           
@@ -193,7 +231,7 @@ class _ScanScreenState extends State<ScanScreen> {
       final hasPending = _scanService.pendingBarcodeData != null;
       final buttonLabel = hasPending
           ? _scanService.pendingBarcodeData!
-          : '바코드를 스캔 후 인식';
+          : 'Scan then recognize';
       return Center(
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

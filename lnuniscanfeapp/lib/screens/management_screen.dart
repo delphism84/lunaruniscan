@@ -20,11 +20,17 @@ class _ManagementScreenState extends State<ManagementScreen> {
   }
 
   Future<void> _refresh() async {
-    final app = context.read<AppState>();
+    if (!mounted) return;
     setState(() => _loading = true);
+
+    final app = context.read<AppState>();
     await app.refreshDevices();
-    _devices = app.deviceList;
-    setState(() => _loading = false);
+
+    if (!mounted) return;
+    setState(() {
+      _devices = app.deviceList;
+      _loading = false;
+    });
   }
 
   @override
@@ -42,7 +48,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
               child: Row(
                 children: [
                   const Text(
-                    '연동 기기',
+                    'Devices',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   const Spacer(),
@@ -60,7 +66,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                   : _devices.isEmpty
                       ? const Center(
                           child: Text(
-                            '등록된 PC가 없습니다',
+                            'No PC registered',
                             style: TextStyle(color: CupertinoColors.systemGrey),
                           ),
                         )
@@ -125,16 +131,16 @@ class _ManagementScreenState extends State<ManagementScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('연동 해제'),
-        content: const Text('이 PC와의 연동을 해제할까요?'),
+        title: const Text('Unbind'),
+        content: const Text('Unbind this PC?'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('취소'),
+            child: const Text('Cancel'),
             onPressed: () => Navigator.of(context).pop(),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            child: const Text('해제'),
+            child: const Text('Unbind'),
             onPressed: () async {
               await app.unbindDevice(deviceId);
               if (mounted) Navigator.of(context).pop();

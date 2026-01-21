@@ -97,6 +97,8 @@ class _MainScreenState extends State<MainScreen> {
                                           fontSize: 12,
                                           color: CupertinoColors.white,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
@@ -147,25 +149,25 @@ class _MainScreenState extends State<MainScreen> {
                     });
                   },
                   backgroundColor: CupertinoColors.systemBackground.withOpacity(0.9),
-                  activeColor: CupertinoColors.white,
+                  activeColor: CupertinoColors.systemBlue,
                   inactiveColor: CupertinoColors.systemGrey,
                   iconSize: 24,
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.qrcode_viewfinder),
-                      label: '인식',
+                      label: 'Scan',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.list_bullet),
-                      label: '결과',
+                      label: 'Results',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.device_desktop),
-                      label: '연동',
+                      label: 'Devices',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(CupertinoIcons.settings),
-                      label: '설정',
+                      label: 'Settings',
                     ),
                   ],
                 ),
@@ -184,21 +186,31 @@ class _MainScreenState extends State<MainScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('별칭 편집'),
+        title: const Text('Edit Alias'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 12),
-            CupertinoTextField(controller: controller, placeholder: 'SCANNER'),
+            SizedBox(
+              height: 36,
+              child: CupertinoTextField(
+                controller: controller,
+                placeholder: 'SCANNER',
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                style: const TextStyle(fontSize: 11),
+                placeholderStyle: const TextStyle(fontSize: 11, color: CupertinoColors.systemGrey),
+                clearButtonMode: OverlayVisibilityMode.editing,
+              ),
+            ),
           ],
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('취소'),
+            child: const Text('Cancel'),
             onPressed: () => Navigator.of(context).pop(),
           ),
           CupertinoDialogAction(
-            child: const Text('저장'),
+            child: const Text('Save'),
             onPressed: () async {
               final v = controller.text.trim();
               await app.updateAlias(v);

@@ -4,11 +4,15 @@ import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/enhanced_scan_service.dart';
 import '../models/scan_item.dart';
+import '../services/local_store_service.dart';
+import '../services/upload_queue_service.dart';
 
 class AppState extends ChangeNotifier {
   final ApiService _api = ApiService();
   final StorageService _storage = StorageService();
   final EnhancedScanService _scan = EnhancedScanService();
+  final LocalStoreService _local = LocalStoreService();
+  final UploadQueueService _uploader = UploadQueueService();
 
   String? _eqid;
   String _alias = 'SCANNER';
@@ -35,6 +39,8 @@ class AppState extends ChangeNotifier {
       _alias = (savedAlias is String && savedAlias.trim().isNotEmpty) ? savedAlias.trim() : 'SCANNER';
       notifyListeners();
       _listenScans();
+      // 앱 시작 시 보류분 재시도
+      _resendPendingInBackground();
       return;
     }
     // request init
@@ -45,28 +51,98 @@ class AppState extends ChangeNotifier {
       await _storage.updateState({'eqid': _eqid, 'alias': _alias});
       notifyListeners();
       _listenScans();
+      // 앱 시작 시 보류분 재시도
+      _resendPendingInBackground();
     }
   }
 
   void _listenScans() {
     _scanSub ??= _scan.scanStream.listen((item) async {
       if (item is BarcodeScanItem && _eqid != null) {
-        // mark uploading while sending
         _scan.updateItemStatus(item.id, ScanStatus.uploading, progress: 0.1);
         notifyListeners();
-        final ok = await _api.sendScan(
-          data: item.barcodeData,
-          eqid: _eqid!,
-          deviceIds: enabledDeviceIds,
-        );
-        _scan.updateItemStatus(
-          item.id,
-          ok ? ScanStatus.completed : ScanStatus.failed,
-          progress: ok ? 1.0 : 0.0,
-        );
-        notifyListeners();
+
+        // 로컬 저장 비동기 처리
+        () async {
+          try {
+            await _local.appendScan(item);
+          } catch (_) {}
+        }();
+
+        // 서버 업로드: 큐에 위임(동시성 제한 + 재시도)
+        _uploader.enqueue(() async {
+          final ok = await _api.sendScan(
+            data: item.barcodeData,
+            eqid: _eqid!,
+            deviceIds: enabledDeviceIds,
+          );
+          _scan.updateItemStatus(
+            item.id,
+            ok ? ScanStatus.completed : ScanStatus.failed,
+            progress: ok ? 1.0 : 0.0,
+          );
+          notifyListeners();
+          return ok;
+        }, id: item.id, maxRetries: 3, onFinal: (id, finalOk) async {
+          if (!finalOk && id != null) {
+            // 최종 실패: 보류 큐에 기록
+            try {
+              await _local.addPending({
+                'id': id,
+                'kind': 'sendScan',
+                'payload': {
+                  'barcodeData': item.barcodeData,
+                },
+                'createdAt': DateTime.now().toIso8601String(),
+              });
+            } catch (_) {}
+          }
+        });
       }
     });
+  }
+
+  // 수동 동기화 버튼에서 호출
+  Future<void> manualSync() async {
+    await _resendPendingInBackground();
+  }
+
+  Future<void> _resendPendingInBackground() async {
+    // 보류 목록을 읽어 재업로드 큐에 위임
+    try {
+      final pending = await _local.readPending();
+      if (pending.isEmpty || _eqid == null) return;
+
+      final successIds = <String>{};
+      for (final p in pending) {
+        final id = p['id'] as String?;
+        final kind = p['kind'] as String?;
+        final payload = p['payload'] as Map<String, dynamic>?;
+        if (id == null || kind != 'sendScan' || payload == null) continue;
+        final code = payload['barcodeData'] as String?;
+        if (code == null || code.isEmpty) continue;
+
+        _uploader.enqueue(() async {
+          final ok = await _api.sendScan(
+            data: code,
+            eqid: _eqid!,
+            deviceIds: enabledDeviceIds,
+          );
+          return ok;
+        }, id: id, maxRetries: 3, onFinal: (finalId, finalOk) async {
+          if (finalOk && finalId != null) {
+            successIds.add(finalId);
+          }
+        });
+      }
+
+      // 큐 완료 후 제거: 간단히 지연 후 삭제 (최대 동시 2, 재시도 포함 여유 대기)
+      Future.delayed(const Duration(seconds: 8), () async {
+        if (successIds.isNotEmpty) {
+          await _local.removePendingByIds(successIds);
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> updateAlias(String alias) async {
