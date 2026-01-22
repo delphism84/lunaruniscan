@@ -1,4 +1,4 @@
-﻿version: "3.8"
+version: "3.8"
 
 services:
   mongo:
@@ -13,18 +13,45 @@ services:
     volumes:
       - /var/uniscan/docker/data/mongo:/data/db
       - /var/uniscan/docker/mongo-init:/docker-entrypoint-initdb.d:ro
-  be:
+  node-api:
     build:
-      context: /var/uniscan/docker/be
+      context: /var/uniscan/lnuniserverbe/node-api
       dockerfile: Dockerfile
-    container_name: lunar-be
+    container_name: lunar-node-api
     restart: always
     depends_on:
       - mongo
+      - dispatch-service
     env_file:
       - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=45444
+      - WS_PATH=/ws/sendReq
+      - MONGO_URI=${MONGO_URI}
+      - MONGO_DB=${MONGO_DB:-uniscan}
+      - DISPATCHER_URL=http://dispatch-service:50210/enqueue
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN:-dev-internal-token}
     ports:
       - "127.0.0.1:45444:45444"
     volumes:
-      - /var/uniscan/docker/be/public:/app/public
-      - /var/uniscan/secrets/google_client_secret.json:/app/secrets/google_client_secret.json:ro
+      - /var/uniscan/lnuniserverbe/data/api-files:/usr/src/app/files
+
+  dispatch-service:
+    build:
+      context: /var/uniscan/services/dispatch-service
+      dockerfile: Dockerfile
+    container_name: lunar-dispatch-service
+    restart: always
+    depends_on:
+      - mongo
+      - node-api
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=50210
+      - MONGO_URI=${MONGO_URI}
+      - MONGO_DB=${MONGO_DB:-uniscan}
+      - NODE_API_INTERNAL_URL=http://node-api:45444/internal/dispatch
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN:-dev-internal-token}
