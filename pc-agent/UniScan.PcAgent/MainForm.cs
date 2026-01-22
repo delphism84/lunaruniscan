@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,11 +23,13 @@ internal sealed class MainForm : Form
     private readonly PictureBox _picQr = new() { SizeMode = PictureBoxSizeMode.Zoom };
     private readonly Label _lblConnValue = new() { AutoSize = true, Text = "-" };
     private readonly Label _lblQueueValue = new() { AutoSize = true, Text = "0" };
+    private readonly Label _lblRegisteredScannerValue = new() { AutoSize = true, Text = "0" };
     private readonly Label _lblLastBarcodeValue = new() { AutoSize = true, Text = "-" };
     private readonly Label _lblLastInputValue = new() { AutoSize = true, Text = "-" };
     private readonly DataGridView _gridHistory = new() { Dock = DockStyle.Fill };
     private readonly PictureBox _picCode = new() { SizeMode = PictureBoxSizeMode.Zoom };
-    private readonly Label _lblPairingBig = new() { AutoSize = true, Text = "------" };
+    private readonly Label _lblPairingCodeBig = new() { AutoSize = true, Text = "------" };
+    private readonly Label _lblPairingPinSmall = new() { AutoSize = true, Text = "" };
 
     // Device tab overlay (shown when not connected)
     private readonly Panel _deviceConnOverlay = new() { Dock = DockStyle.Fill, Visible = true };
@@ -57,6 +60,8 @@ internal sealed class MainForm : Form
 
     private string _pcId = "";
     private string _pairingCode = "";
+    private string _pairingPin = "";
+    private int _registeredScanners = 0;
 
     private bool _advancedUnlocked = false;
 
@@ -148,7 +153,9 @@ internal sealed class MainForm : Form
         };
 
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));   // top header (fixed)
+        // Bigger QR area improves phone scan reliability (PC monitor -> phone camera)
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));  // QR
+        // Let status card expand to fit added rows (Queue + Registered Scanner etc.)
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // status card
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // history grid
 
@@ -347,7 +354,7 @@ internal sealed class MainForm : Form
                     _cmbSuffixKey.SelectedItem = "Enter";
             }, null);
 
-            _client = new WsAgentClient(_config, AppendLog, SetConnStatus, SetPcId, SetPairingCode);
+            _client = new WsAgentClient(_config, AppendLog, SetConnStatus, SetPcId, SetPairingCode, SetRegisteredScanners);
             _worker = new InputQueueWorker(
                 _config,
                 _client,
@@ -443,10 +450,15 @@ internal sealed class MainForm : Form
 
     private void SetPairingCode(string code)
     {
-        _pairingCode = code ?? "";
+        // Backward compatible: accept "CODE-PIN" or "CODE".
+        var raw = (code ?? "").Trim();
+        var parts = raw.Split(new[] { '-', ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+        _pairingCode = parts.Length >= 1 ? parts[0].Trim() : "";
+        _pairingPin = parts.Length >= 2 ? parts[1].Trim() : "";
         _ui.Post(_ =>
         {
-            _lblPairingBig.Text = string.IsNullOrWhiteSpace(_pairingCode) ? "------" : _pairingCode;
+            _lblPairingCodeBig.Text = string.IsNullOrWhiteSpace(_pairingCode) ? "------" : _pairingCode;
+            _lblPairingPinSmall.Text = string.IsNullOrWhiteSpace(_pairingPin) ? "" : _pairingPin;
             UpdateQr();
         }, null);
     }
@@ -454,6 +466,12 @@ internal sealed class MainForm : Form
     private void SetQueueLength(int n)
     {
         _ui.Post(_ => _lblQueueValue.Text = n.ToString(), null);
+    }
+
+    private void SetRegisteredScanners(int n)
+    {
+        _registeredScanners = n < 0 ? 0 : n;
+        _ui.Post(_ => _lblRegisteredScannerValue.Text = _registeredScanners.ToString(), null);
     }
 
     private void SetLastBarcode(string barcode)
@@ -481,8 +499,38 @@ internal sealed class MainForm : Form
             return;
         }
 
-        var payload = _pairingCode.Trim();
-        var bmp = QrCodeUtil.Render(payload, pixelsPerModule: 8);
+        // Keep payload short for scan reliability (PC screen -> phone camera).
+        // App supports: "CODE-PIN" format.
+        var payload = string.IsNullOrWhiteSpace(_pairingPin)
+            ? _pairingCode.Trim()
+            : $"{_pairingCode.Trim()}-{_pairingPin.Trim()}";
+        // Larger module size improves scan reliability
+        var bmp = QrCodeUtil.Render(payload, pixelsPerModule: 16);
+
+        // If the PictureBox is scaling, pre-scale with nearest-neighbor to keep edges crisp.
+        var target = Math.Min(_picQr.ClientSize.Width, _picQr.ClientSize.Height);
+        if (target > 32)
+        {
+            try
+            {
+                var resized = new Bitmap(target, target);
+                using (var g = Graphics.FromImage(resized))
+                {
+                    g.Clear(Color.White);
+                    g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    g.PixelOffsetMode = PixelOffsetMode.Half;
+                    g.SmoothingMode = SmoothingMode.None;
+                    g.DrawImage(bmp, new Rectangle(0, 0, target, target));
+                }
+                bmp.Dispose();
+                bmp = resized;
+            }
+            catch
+            {
+                // ignore resize failure; fall back to original bitmap
+            }
+        }
+
         SetQrImage(bmp);
     }
 
@@ -701,12 +749,15 @@ internal sealed class MainForm : Form
     private void ApplySpecialFonts()
     {
         // Pairing code (large)
-        _lblPairingBig.Font = new Font("Arial", 26f, FontStyle.Bold);
-        _lblPairingBig.ForeColor = Color.FromArgb(17, 17, 17);
+        _lblPairingCodeBig.Font = new Font("Arial", 26f, FontStyle.Bold);
+        _lblPairingCodeBig.ForeColor = Color.FromArgb(17, 17, 17);
+        _lblPairingPinSmall.Font = new Font("Arial", 14f, FontStyle.Regular);
+        _lblPairingPinSmall.ForeColor = Color.FromArgb(60, 60, 60);
 
         // Status values (larger, mobile-like)
         _lblConnValue.Font = new Font("Arial", 12f, FontStyle.Bold);
         _lblQueueValue.Font = new Font("Arial", 12f, FontStyle.Bold);
+        _lblRegisteredScannerValue.Font = new Font("Arial", 12f, FontStyle.Bold);
         _lblLastInputValue.Font = new Font("Arial", 12f, FontStyle.Bold);
         _lblLastBarcodeValue.Font = new Font("Arial", 12f, FontStyle.Bold);
 
@@ -745,7 +796,17 @@ internal sealed class MainForm : Form
         _picCode.Width = 44;
         _picCode.Height = 44;
         right.Controls.Add(_picCode);
-        right.Controls.Add(_lblPairingBig);
+        var codeRow = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0),
+            Padding = new Padding(0),
+        };
+        codeRow.Controls.Add(_lblPairingCodeBig);
+        codeRow.Controls.Add(_lblPairingPinSmall);
+        right.Controls.Add(codeRow);
 
         header.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Color.White }, 0, 0);
         header.Controls.Add(right, 1, 0);
@@ -770,8 +831,10 @@ internal sealed class MainForm : Form
             // ignore image load failure
         }
 
-        _lblPairingBig.Margin = new Padding(6, 0, 0, 0);
-        _lblPairingBig.Text = string.IsNullOrWhiteSpace(_pairingCode) ? "------" : _pairingCode;
+        _lblPairingCodeBig.Margin = new Padding(6, 0, 0, 0);
+        _lblPairingCodeBig.Text = string.IsNullOrWhiteSpace(_pairingCode) ? "------" : _pairingCode;
+        _lblPairingPinSmall.Margin = new Padding(6, 8, 0, 0);
+        _lblPairingPinSmall.Text = string.IsNullOrWhiteSpace(_pairingPin) ? "" : _pairingPin;
     }
 
     private Control BuildStatusCard()
@@ -782,7 +845,9 @@ internal sealed class MainForm : Form
             BackColor = Color.White,
             Padding = new Padding(12),
             Margin = new Padding(0, 0, 0, 0),
-            Height = 104
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(0, 140)
         };
         card.Paint += (_, e) =>
         {
@@ -798,7 +863,7 @@ internal sealed class MainForm : Form
             Dock = DockStyle.Fill,
             BackColor = Color.White,
             ColumnCount = 2,
-            RowCount = 2,
+            RowCount = 3,
             Margin = new Padding(0),
             Padding = new Padding(0)
         };
@@ -806,11 +871,13 @@ internal sealed class MainForm : Form
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         table.Controls.Add(BuildStatusCell("Connection", _lblConnValue), 0, 0);
         table.Controls.Add(BuildStatusCell("Queue", _lblQueueValue), 1, 0);
         table.Controls.Add(BuildStatusCell("Last input", _lblLastInputValue), 0, 1);
         table.Controls.Add(BuildStatusCell("Last barcode", _lblLastBarcodeValue), 1, 1);
+        table.Controls.Add(BuildStatusCell("Registered Scanner", _lblRegisteredScannerValue), 1, 2);
 
         card.Controls.Add(table);
         return card;

@@ -15,6 +15,7 @@ internal sealed class WsAgentClient : IDisposable
     private readonly Action<string> _setStatus;
     private readonly Action<string> _setPcId;
     private readonly Action<string> _setPairingCode;
+    private readonly Action<int> _setRegisteredScanners;
 
     private readonly JavaScriptSerializer _json = new();
     private readonly CancellationTokenSource _cts = new();
@@ -29,13 +30,15 @@ internal sealed class WsAgentClient : IDisposable
         Action<string> log,
         Action<string> setStatus,
         Action<string> setPcId,
-        Action<string> setPairingCode)
+        Action<string> setPairingCode,
+        Action<int> setRegisteredScanners)
     {
         _config = config;
         _log = log;
         _setStatus = setStatus;
         _setPcId = setPcId;
         _setPairingCode = setPairingCode;
+        _setRegisteredScanners = setRegisteredScanners;
     }
 
     public async Task StartAsync()
@@ -44,10 +47,24 @@ internal sealed class WsAgentClient : IDisposable
         _ = Task.Run(RunAsync, _cts.Token);
     }
 
-    public async Task SendDeliverAckAsync(string jobId, int serverAttempt, bool ok, int agentAttempt, string? error, string? inputMethod, int? durationMs)
+    public async Task SendDeliverAckAsync(string jobId, int serverAttempt, bool ok, int agentAttempt, string? error, string? inputMethod, int? durationMs, string? deliveryId = null)
     {
         var ws = _ws;
         if (ws == null || ws.State != WebSocketState.Open) return;
+
+        Dictionary<string, object?> data = new()
+        {
+            ["jobId"] = jobId,
+            ["pcId"] = _pcId,
+            ["attempt"] = serverAttempt,
+            ["agentAttempt"] = agentAttempt,
+            ["ok"] = ok,
+            ["error"] = ok ? null : (error ?? "AGENT_FAIL"),
+            ["inputMethod"] = inputMethod,
+            ["durationMs"] = durationMs
+        };
+        if (!string.IsNullOrWhiteSpace(deliveryId))
+            data["deliveryId"] = deliveryId;
 
         var msg = new Dictionary<string, object?>
         {
@@ -55,17 +72,7 @@ internal sealed class WsAgentClient : IDisposable
             ["requestId"] = Guid.NewGuid().ToString("n"),
             ["clientType"] = "pcAgent",
             ["timestamp"] = DateTime.UtcNow.ToString("o"),
-            ["data"] = new Dictionary<string, object?>
-            {
-                ["jobId"] = jobId,
-                ["pcId"] = _pcId,
-                ["attempt"] = serverAttempt,
-                ["agentAttempt"] = agentAttempt,
-                ["ok"] = ok,
-                ["error"] = ok ? null : (error ?? "AGENT_FAIL"),
-                ["inputMethod"] = inputMethod,
-                ["durationMs"] = durationMs
-            }
+            ["data"] = data
         };
 
         await SendAsync(msg);
@@ -190,6 +197,7 @@ internal sealed class WsAgentClient : IDisposable
         if (string.Equals(ev, "pairingCode", StringComparison.OrdinalIgnoreCase))
         {
             var code = GetString(data, "code");
+            var pin = GetString(data, "pin");
             var pcId = GetString(data, "pcId");
             if (!string.IsNullOrWhiteSpace(pcId))
             {
@@ -198,15 +206,25 @@ internal sealed class WsAgentClient : IDisposable
             }
             if (!string.IsNullOrWhiteSpace(code))
             {
-                _setPairingCode(code);
-                _log($"Pairing code received: {code}");
+                // Show "code-pin" so user can type both; QR payload uses same string.
+                var shown = string.IsNullOrWhiteSpace(pin) ? code : $"{code}-{pin}";
+                _setPairingCode(shown);
+                _log($"Pairing code received: {shown}");
             }
+            return;
+        }
+
+        if (string.Equals(ev, "registeredScanners", StringComparison.OrdinalIgnoreCase))
+        {
+            var n = GetInt(data, "count");
+            _setRegisteredScanners(n);
             return;
         }
 
         if (string.Equals(ev, "deliverBarcode", StringComparison.OrdinalIgnoreCase))
         {
             var jobId = GetString(data, "jobId");
+            var deliveryId = GetString(data, "deliveryId");
             var attempt = GetInt(data, "attempt");
             var barcode = GetString(data, "barcode");
             var suffixKey = GetString(data, "suffixKey");
@@ -215,6 +233,7 @@ internal sealed class WsAgentClient : IDisposable
             OnDeliverBarcode?.Invoke(new DeliverBarcodeItem
             {
                 JobId = jobId,
+                DeliveryId = deliveryId,
                 ServerAttempt = attempt <= 0 ? 1 : attempt,
                 Barcode = barcode,
                 SuffixKey = string.IsNullOrWhiteSpace(suffixKey) ? _config.BarcodeSuffixKey : suffixKey,

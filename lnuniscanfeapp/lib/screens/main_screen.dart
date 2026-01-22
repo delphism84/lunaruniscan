@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../providers/app_state.dart';
 import 'scan_screen.dart';
 import 'result_screen.dart';
@@ -35,8 +34,8 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final size = MediaQuery.of(context).size;
-    final headerHeight = size.height * 0.2;
+    final topInset = MediaQuery.of(context).padding.top;
+    final headerHeight = topInset + 60; // 최대한 얇게(안전영역 포함)
     final eqid = app.eqid ?? '------';
     final alias = app.alias;
 
@@ -45,83 +44,61 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           Column(
             children: [
-              // top header 20%
+              // top header (compact)
               Container(
                 height: headerHeight,
                 width: double.infinity,
                 color: CupertinoColors.systemBlue,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'EQID',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: CupertinoColors.white,
-                                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, topInset + 6, 16, 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              eqid,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                color: CupertinoColors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                eqid,
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  color: CupertinoColors.white,
-                                  fontWeight: FontWeight.bold,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            GestureDetector(
+                              onTap: () => _showEditAliasDialog(app, alias),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: () => _showEditAliasDialog(app, alias),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(CupertinoIcons.pencil, color: CupertinoColors.white, size: 14),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        alias,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: CupertinoColors.white,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(CupertinoIcons.pencil, color: CupertinoColors.white, size: 12),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      alias,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: CupertinoColors.white,
                                       ),
-                                    ],
-                                  ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        // QR on right
-                        Container(
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.all(6),
-                          child: QrImageView(
-                            data: eqid,
-                            size: headerHeight * 0.6,
-                            backgroundColor: CupertinoColors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

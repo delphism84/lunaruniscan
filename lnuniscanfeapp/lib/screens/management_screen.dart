@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import 'pair_qr_screen.dart';
 
 class ManagementScreen extends StatefulWidget {
   const ManagementScreen({super.key});
@@ -14,13 +15,17 @@ class _ManagementScreenState extends State<ManagementScreen> {
   List<Map<String, dynamic>> _devices = [];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _refresh();
+  void initState() {
+    super.initState();
+    // 최초 1회만 로드 (AppState notifyListeners -> didChangeDependencies 루프 방지)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refresh();
+    });
   }
 
   Future<void> _refresh() async {
     if (!mounted) return;
+    if (_loading) return;
     setState(() => _loading = true);
 
     final app = context.read<AppState>();
@@ -54,8 +59,15 @@ class _ManagementScreenState extends State<ManagementScreen> {
                   const Spacer(),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    onPressed: _loading ? null : () => _showPairDialog(app),
-                    child: const Text('Pair'),
+                    onPressed: _loading ? null : () async {
+                      final ok = await Navigator.of(context).push<bool>(
+                        CupertinoPageRoute(builder: (_) => const PairQrScreen()),
+                      );
+                      if (ok == true && mounted) {
+                        _refresh();
+                      }
+                    },
+                    child: const Icon(CupertinoIcons.qrcode_viewfinder, size: 22),
                   ),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -148,42 +160,6 @@ class _ManagementScreenState extends State<ManagementScreen> {
             child: const Text('Unbind'),
             onPressed: () async {
               await app.unbindDevice(deviceId);
-              if (mounted) Navigator.of(context).pop();
-              if (mounted) _refresh();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPairDialog(AppState app) {
-    final controller = TextEditingController();
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Pairing Code'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: controller,
-              placeholder: '6-digit code',
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          CupertinoDialogAction(
-            child: const Text('Pair'),
-            onPressed: () async {
-              final code = controller.text.trim();
-              await app.pairWithCode(code);
               if (mounted) Navigator.of(context).pop();
               if (mounted) _refresh();
             },

@@ -76,7 +76,7 @@ internal sealed class InputQueueWorker : IDisposable
         if (_successJobs.ContainsKey(item.JobId))
         {
             _log($"Duplicate jobId={item.JobId} -> ACK only (no re-input)");
-            await _client.SendDeliverAckAsync(item.JobId, item.ServerAttempt, ok: true, agentAttempt: 0, error: null, inputMethod: "duplicate", durationMs: 0);
+            await _client.SendDeliverAckAsync(item.JobId, item.ServerAttempt, ok: true, agentAttempt: 0, error: null, inputMethod: "duplicate", durationMs: 0, deliveryId: item.DeliveryId);
             _onInputResult?.Invoke(new InputResultInfo
             {
                 JobId = item.JobId,
@@ -108,7 +108,7 @@ internal sealed class InputQueueWorker : IDisposable
         {
             _successJobs[item.JobId] = DateTime.UtcNow;
             _log($"Input OK jobId={item.JobId} method={inputMethod} attempt={agentAttempt} ({sw.ElapsedMilliseconds}ms)");
-            await _client.SendDeliverAckAsync(item.JobId, item.ServerAttempt, ok: true, agentAttempt: agentAttempt, error: null, inputMethod: inputMethod, durationMs: durationMs);
+            await _client.SendDeliverAckAsync(item.JobId, item.ServerAttempt, ok: true, agentAttempt: agentAttempt, error: null, inputMethod: inputMethod, durationMs: durationMs, deliveryId: item.DeliveryId);
             _onInputResult?.Invoke(new InputResultInfo
             {
                 JobId = item.JobId,
@@ -124,7 +124,7 @@ internal sealed class InputQueueWorker : IDisposable
         else
         {
             _log($"Input FAIL jobId={item.JobId} attempt={agentAttempt} err={error}");
-            await _client.SendDeliverAckAsync(item.JobId, item.ServerAttempt, ok: false, agentAttempt: agentAttempt, error: error, inputMethod: inputMethod, durationMs: durationMs);
+            await _client.SendDeliverAckAsync(item.JobId, item.ServerAttempt, ok: false, agentAttempt: agentAttempt, error: error, inputMethod: inputMethod, durationMs: durationMs, deliveryId: item.DeliveryId);
             _onInputResult?.Invoke(new InputResultInfo
             {
                 JobId = item.JobId,

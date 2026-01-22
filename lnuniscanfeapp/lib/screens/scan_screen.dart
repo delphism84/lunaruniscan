@@ -30,6 +30,8 @@ class _ScanScreenState extends State<ScanScreen> {
       detectionTimeoutMs: 1200, // 감지 간격 증가
       returnImage: false, // 이미지 미반환으로 메모리 압박 완화
       formats: const [
+        // NOTE: QR 페어링 화면에서도 QR 인식이 필요하므로 qrCode 포함
+        BarcodeFormat.qrCode,
         BarcodeFormat.ean13,
         BarcodeFormat.ean8,
         BarcodeFormat.upcA,

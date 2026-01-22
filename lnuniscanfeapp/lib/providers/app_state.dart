@@ -268,11 +268,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> pairWithCode(String code) async {
+  Future<void> pairWithCode(String code, {String? pin}) async {
     if (_eqid == null) return;
     await _wsApi.request('pairRequest', data: {
       'eqid': _eqid,
       'code': code.trim(),
+      if (pin != null && pin.trim().isNotEmpty) 'pin': pin.trim(),
     });
     await refreshDevices();
   }

@@ -9,12 +9,14 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
     "express": "^4.19.2",
+    "mongodb": "^6.19.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "socket.io": "^4.7.5",
     "uuid": "^11.0.3",
-    "dayjs": "^1.11.13"
+    "ws": "^8.18.3"
   }
 }
 
