@@ -2,12 +2,14 @@
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
     <Configuration Condition="'$(Configuration)'==''">Release</Configuration>
-    <Platform Condition="'$(Platform)'==''">x64</Platform>
+    <Platform Condition="'$(Platform)'==''">x86</Platform>
     <OutputName>UniScan.PcAgent.Setup</OutputName>
+    <EnableDefaultItems>false</EnableDefaultItems>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="Bundle.wxs" />
+    <Content Include="license.rtf" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +19,9 @@
 
   <ItemGroup>
     <ProjectReference Include="UniScan.PcAgent.Msi.wixproj" Name="PcAgentMsi" />
+    <BindPath Include="bin\$(Configuration)\$(Platform)\">
+      <BindName>MsiOut</BindName>
+    </BindPath>
   </ItemGroup>
 </Project>
 

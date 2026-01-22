@@ -1,6 +1,6 @@
 param(
   [int]$Port = 45444,
-  [string]$HostName = "127.0.0.1",
+  [string]$HostName = "0.0.0.0",
   [string]$WsPath = "/ws/sendReq",
   [switch]$NoInstall,
   [switch]$Console

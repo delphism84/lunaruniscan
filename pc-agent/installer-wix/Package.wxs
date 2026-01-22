@@ -7,17 +7,15 @@
     Manufacturer="LunarSystem"
     Version="0.1.0.0"
     UpgradeCode="{7D7D7D56-4E3A-4F5D-9C3B-1C1C5D7E9A11}"
-    InstallScope="perMachine"
-    InstallPrivileges="elevated"
-    Platform="x64">
+    Scope="perMachine">
 
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
 
     <!-- Require .NET Framework 4.8+ installed (in-place). -->
     <PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
-    <Condition Message="This application requires .NET Framework 4.8 or later.">
-      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED = "1"]]>
-    </Condition>
+    <Launch
+      Condition='Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED = "1"'
+      Message=".NET Framework 4.8 or later is required." />
 
     <StandardDirectory Id="ProgramFilesFolder">
       <Directory Id="CompanyFolder" Name="UniScan">
@@ -31,10 +29,9 @@
 
     <!-- Add everything under app output dir (exe/dll/themes/assets/config). -->
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Files>
-        <Include Path="!(bindpath.AppBin)\**" />
-        <Exclude Path="!(bindpath.AppBin)\**\*.pdb" />
-        <Exclude Path="!(bindpath.AppBin)\**\*.xml" />
+      <Files Include="!(bindpath.AppBin)\**">
+        <Exclude Files="!(bindpath.AppBin)\**\*.pdb" />
+        <Exclude Files="!(bindpath.AppBin)\**\*.xml" />
       </Files>
     </ComponentGroup>
 

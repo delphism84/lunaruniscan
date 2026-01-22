@@ -54,6 +54,11 @@ class _ManagementScreenState extends State<ManagementScreen> {
                   const Spacer(),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    onPressed: _loading ? null : () => _showPairDialog(app),
+                    child: const Text('Pair'),
+                  ),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     onPressed: _loading ? null : _refresh,
                     child: const Icon(CupertinoIcons.refresh, size: 22),
                   ),
@@ -108,7 +113,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                                   ),
                                   CupertinoSwitch(
                                     value: on,
-                                    onChanged: (v) => app.setDeviceEnabled(id, v),
+                                    onChanged: (v) async => app.setDeviceEnabled(id, v),
                                   ),
                                   CupertinoButton(
                                     padding: const EdgeInsets.all(12),
@@ -132,7 +137,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: const Text('Unbind'),
-        content: const Text('Unbind this PC?'),
+        content: const Text('Disable this PC for dispatch?'),
         actions: [
           CupertinoDialogAction(
             child: const Text('Cancel'),
@@ -143,6 +148,42 @@ class _ManagementScreenState extends State<ManagementScreen> {
             child: const Text('Unbind'),
             onPressed: () async {
               await app.unbindDevice(deviceId);
+              if (mounted) Navigator.of(context).pop();
+              if (mounted) _refresh();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPairDialog(AppState app) {
+    final controller = TextEditingController();
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Pairing Code'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            CupertinoTextField(
+              controller: controller,
+              placeholder: '6-digit code',
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            child: const Text('Pair'),
+            onPressed: () async {
+              final code = controller.text.trim();
+              await app.pairWithCode(code);
               if (mounted) Navigator.of(context).pop();
               if (mounted) _refresh();
             },

@@ -3,7 +3,8 @@ import { WebSocketServer } from "ws";
 import { v4 as uuidv4 } from "uuid";
 
 const PORT = Number(process.env.PORT || 45444);
-const HOST = process.env.HOST || "127.0.0.1";
+// Bind to all interfaces by default for LAN tests (e.g. ws://192.168.1.251:45444)
+const HOST = process.env.HOST || "0.0.0.0";
 const WS_PATH = process.env.WS_PATH || "/ws/sendReq";
 
 const ackTimeoutMs = Number(process.env.ACK_TIMEOUT_MS || 3000);

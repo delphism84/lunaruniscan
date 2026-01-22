@@ -15,7 +15,8 @@
     <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense">
       <bal:WixStandardBootstrapperApplication
         Theme="standard"
-        SuppressOptionsUI="yes" />
+        SuppressOptionsUI="yes"
+        LicenseFile="license.rtf" />
     </BootstrapperApplicationRef>
 
     <Chain>
@@ -23,7 +24,7 @@
       <PackageGroupRef Id="NetFx48WebAsPrereq" />
 
       <!-- Then install our MSI (per-machine, elevated) -->
-      <MsiPackage SourceFile="$(PcAgentMsi.TargetPath)" Vital="yes" />
+      <MsiPackage SourceFile="!(bindpath.MsiOut)\UniScan.PcAgent.msi" Vital="yes" />
     </Chain>
   </Bundle>
 </Wix>

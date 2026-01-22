@@ -2,8 +2,9 @@
   <PropertyGroup>
     <OutputType>Package</OutputType>
     <Configuration Condition="'$(Configuration)'==''">Release</Configuration>
-    <Platform Condition="'$(Platform)'==''">x64</Platform>
+    <Platform Condition="'$(Platform)'==''">x86</Platform>
     <OutputName>UniScan.PcAgent</OutputName>
+    <EnableDefaultItems>false</EnableDefaultItems>
   </PropertyGroup>
 
   <ItemGroup>

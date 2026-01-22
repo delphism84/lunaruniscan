@@ -33,9 +33,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSectionHeader('App Settings'),
             _buildSettingItem(
               icon: CupertinoIcons.link,
-              title: 'API Base URL',
-              subtitle: app.apiBaseUrl,
-              onTap: () => _showApiDialog(app),
+              title: 'WS Server URL',
+              subtitle: app.wsUrl,
+              onTap: () => _showWsDialog(app),
+            ),
+            _buildSettingItem(
+              icon: CupertinoIcons.wifi,
+              title: 'WS Connection',
+              subtitle: app.isWsConnected ? 'connected' : 'disconnected',
             ),
             _buildSettingItem(
               icon: CupertinoIcons.bell,
@@ -130,17 +135,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showApiDialog(AppState app) {
-    final controller = TextEditingController(text: app.apiBaseUrl);
+  void _showWsDialog(AppState app) {
+    final controller = TextEditingController(text: app.wsUrl);
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('API Base URL'),
+        title: const Text('WS Server URL'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 12),
-            CupertinoTextField(controller: controller, placeholder: 'http://192.168.1.251:50100'),
+            CupertinoTextField(
+              controller: controller,
+              placeholder: 'ws://192.168.1.250:45444/ws/sendReq',
+            ),
           ],
         ),
         actions: [
@@ -151,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           CupertinoDialogAction(
             child: const Text('Save'),
             onPressed: () async {
-              await app.setApiBaseUrl(controller.text.trim());
+              await app.setWsUrl(controller.text.trim());
               if (mounted) Navigator.of(context).pop();
             },
           ),

@@ -1,5 +1,5 @@
 {
-  "serverUrl": "ws://127.0.0.1:45444/ws/sendReq",
+  "serverUrl": "ws://192.168.1.250:45444/ws/sendReq",
   "group": "default",
   "deviceName": "PC-01",
   "machineId": "",
