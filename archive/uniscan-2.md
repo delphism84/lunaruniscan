@@ -18,4 +18,4 @@
 앱도 이 ip로 서버 세팅
 방화벽 모둔 open상태
 
-mongodb://lnadmin:Eldpdj%21%4034@139.180.189.230:57018/uniscan?authSource=admin&authMechanism=SCRAM-SHA-256
+mongodb://<user>:<password>@139.180.189.230:57018/uniscan?authSource=admin&authMechanism=SCRAM-SHA-256
