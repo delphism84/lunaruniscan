@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+
+  <Package
+    Name="UniScan PC Agent"
+    Manufacturer="LunarSystem"
+    Version="0.1.0.0"
+    UpgradeCode="{7D7D7D56-4E3A-4F5D-9C3B-1C1C5D7E9A11}"
+    InstallScope="perMachine"
+    InstallPrivileges="elevated"
+    Platform="x64">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+
+    <!-- Require .NET Framework 4.8+ installed (in-place). -->
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
+    <Condition Message="This application requires .NET Framework 4.8 or later.">
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED = "1"]]>
+    </Condition>
+
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="CompanyFolder" Name="UniScan">
+        <Directory Id="INSTALLFOLDER" Name="PcAgent" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppProgramMenuFolder" Name="UniScan PcAgent" />
+    </StandardDirectory>
+
+    <!-- Add everything under app output dir (exe/dll/themes/assets/config). -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files>
+        <Include Path="!(bindpath.AppBin)\**" />
+        <Exclude Path="!(bindpath.AppBin)\**\*.pdb" />
+        <Exclude Path="!(bindpath.AppBin)\**\*.xml" />
+      </Files>
+    </ComponentGroup>
+
+    <!-- Start Menu shortcut + uninstall cleanup -->
+    <Component Id="StartMenuShortcuts" Guid="{4B7DAF5B-91C5-4D2E-8F0E-2F5A9C0D2B10}" Directory="AppProgramMenuFolder">
+      <Shortcut
+        Id="StartMenuShortcut"
+        Name="UniScan PC Agent"
+        Target="[#UniScan.PcAgent.exe]"
+        WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveAppProgramMenuFolder" Directory="AppProgramMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKLM" Key="Software\LunarSystem\UniScan\PcAgent" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- Auto-start on login (machine-wide). -->
+    <Component Id="AutoStart" Guid="{3C1A1B2C-6F8C-4C2F-AE2A-6B0A4D1F1C21}">
+      <RegistryValue
+        Root="HKLM"
+        Key="Software\Microsoft\Windows\CurrentVersion\Run"
+        Name="UniScanPcAgent"
+        Value="&quot;[INSTALLFOLDER]UniScan.PcAgent.exe&quot;"
+        Type="string"
+        KeyPath="yes" />
+    </Component>
+
+    <Feature Id="MainFeature" Title="UniScan PC Agent" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcuts" />
+      <ComponentRef Id="AutoStart" />
+    </Feature>
+  </Package>
+</Wix>
+

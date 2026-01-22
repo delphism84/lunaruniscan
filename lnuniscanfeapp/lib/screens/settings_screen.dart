@@ -140,7 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 12),
-            CupertinoTextField(controller: controller, placeholder: 'http://175.100.115.114:50100'),
+            CupertinoTextField(controller: controller, placeholder: 'http://192.168.1.251:50100'),
           ],
         ),
         actions: [

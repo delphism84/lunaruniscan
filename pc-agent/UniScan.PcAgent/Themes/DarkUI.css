@@ -1,0 +1,35 @@
+/* Minimal dark theme for UniScan PC Agent (Gsemac.Forms.Styles) */
+
+Form {
+  background-color: #1e1e1e;
+  color: #eaeaea;
+}
+
+Label {
+  color: #eaeaea;
+}
+
+TextBox {
+  background-color: #252526;
+  color: #eaeaea;
+  border-color: #3c3c3c;
+  border-style: solid;
+  border-width: 1;
+}
+
+Button {
+  background-color: #2d2d30;
+  color: #eaeaea;
+  border-color: #3c3c3c;
+  border-style: solid;
+  border-width: 1;
+}
+
+ListBox {
+  background-color: #252526;
+  color: #eaeaea;
+  border-color: #3c3c3c;
+  border-style: solid;
+  border-width: 1;
+}
+

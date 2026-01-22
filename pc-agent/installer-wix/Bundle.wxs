@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
+     xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+
+  <Bundle
+    Name="UniScan PC Agent Setup"
+    Manufacturer="LunarSystem"
+    Version="0.1.0.0"
+    UpgradeCode="{B6D9C1B1-4D38-4A2F-8D2C-70DDB0D7E3A1}"
+    DisableModify="yes"
+    DisableRemove="no">
+
+    <!-- Simple built-in UI -->
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense">
+      <bal:WixStandardBootstrapperApplication
+        Theme="standard"
+        SuppressOptionsUI="yes" />
+    </BootstrapperApplicationRef>
+
+    <Chain>
+      <!-- Install .NET Framework 4.8 (web) if missing -->
+      <PackageGroupRef Id="NetFx48WebAsPrereq" />
+
+      <!-- Then install our MSI (per-machine, elevated) -->
+      <MsiPackage SourceFile="$(PcAgentMsi.TargetPath)" Vital="yes" />
+    </Chain>
+  </Bundle>
+</Wix>
+

@@ -1,0 +1,26 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <Configuration Condition="'$(Configuration)'==''">Release</Configuration>
+    <Platform Condition="'$(Platform)'==''">x64</Platform>
+    <OutputName>UniScan.PcAgent</OutputName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Package.wxs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Build the app and use its output as bindpath -->
+    <ProjectReference Include="..\UniScan.PcAgent\UniScan.PcAgent.csproj" Name="PcAgentApp" />
+    <BindPath Include="..\UniScan.PcAgent\bin\$(Configuration)\net48\">
+      <BindName>AppBin</BindName>
+    </BindPath>
+  </ItemGroup>
+</Project>
+

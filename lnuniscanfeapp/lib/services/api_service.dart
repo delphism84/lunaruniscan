@@ -7,7 +7,8 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  String _baseUrl = 'http://175.100.115.114:50100';
+  // 기본 BE 호스트(로컬/사내망 개발용)
+  String _baseUrl = 'http://192.168.1.251:50100';
 
   String get baseUrl => _baseUrl;
   Future<void> setBaseUrl(String url) async {

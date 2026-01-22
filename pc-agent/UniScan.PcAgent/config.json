@@ -1,0 +1,12 @@
+{
+  "serverUrl": "ws://127.0.0.1:45444/ws/sendReq",
+  "group": "default",
+  "deviceName": "PC-01",
+  "machineId": "",
+  "targetWindow": {
+    "processName": "",
+    "windowTitleContains": ""
+  },
+  "barcodeSuffixKey": "Enter"
+}
+
