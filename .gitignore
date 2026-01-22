@@ -83,6 +83,12 @@ Thumbs.db
 be-ws/node_modules/
 be-ws/.env
 
+# Node (lnuniserverbe/node-api)
+lnuniserverbe/node-api/node_modules/
+lnuniserverbe/node-api/.env
+lnuniserverbe/node-api/.env.local
+lnuniserverbe/node-api/.env.*.local
+
 
 # Remote repo rules
 docker/data/
