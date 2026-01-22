@@ -42,6 +42,20 @@ lnUniScanfeapp/macos/Flutter/ephemeral/
 lnUniScanfeapp/linux/flutter/ephemeral/
 lnUniScanfeapp/windows/flutter/ephemeral/
 
+# Flutter (lnuniscanfeapp) - folder name casing fix
+lnuniscanfeapp/.dart_tool/
+lnuniscanfeapp/.packages
+lnuniscanfeapp/build/
+lnuniscanfeapp/.flutter-plugins
+lnuniscanfeapp/.flutter-plugins-dependencies
+lnuniscanfeapp/.metadata
+lnuniscanfeapp/ios/Pods/
+lnuniscanfeapp/ios/.symlinks/
+lnuniscanfeapp/macos/Flutter/ephemeral/
+lnuniscanfeapp/linux/flutter/ephemeral/
+lnuniscanfeapp/windows/flutter/ephemeral/
+lnuniscanfeapp/lnuniscanfeapp.zip
+
 # .NET (lnuniserverbe)
 lnuniserverbe/LnUniScanBE/bin/
 lnuniserverbe/LnUniScanBE/obj/
@@ -56,6 +70,18 @@ lnuniserverbe/data/
 
 # OS
 Thumbs.db
+
+# Visual Studio (pc-agent 등)
+.vs/
+**/.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Node (be-ws)
+be-ws/node_modules/
+be-ws/.env
 
 
 # Remote repo rules
